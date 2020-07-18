@@ -1,6 +1,7 @@
 import logging
 
 from twitchio.ext import commands
+from .permissions import Permissions
 
 logger = logging.getLogger(__name__)
 
@@ -16,15 +17,46 @@ class Keelimebot(commands.Bot):
             initial_channels=['keelimebot']
         )
 
-    # Events don't need decorators when subclassed
+    def get_author_permissions(self, ctx):
+        """Returns the permissions of the given message's author
+
+        :param ctx: message context, such as given to event_message(self, ctx)
+        :rtype: Permissions
+        """
+        if ctx.tags and ctx.tags['room-id'] == ctx.author.id:
+            return Permissions.STREAMER
+
+        elif ctx.author.name.lower() == self.nick.lower():
+            return Permissions.BOT
+
+        elif ctx.author.is_mod:
+            return Permissions.MODERATOR
+
+        elif ctx.author.is_subscriber:
+            return Permissions.SUBSCRIBER
+
+        return Permissions.NONE
+
     async def event_ready(self):
-        print(f'Ready | {self.nick}')
+        """Called once when the bot goes online.
+        """
+        logger.info(f'Ready | {self.nick}')
+        for channel in self.initial_channels:
+            await self._ws.send_privmsg(channel, f"/me has landed!")
 
-    async def event_message(self, message):
-        print(message.content)
-        await self.handle_commands(message)
+    async def event_message(self, ctx):
+        """Called once when a message is posted in chat.
+        """
+        permissions = self.get_author_permissions(ctx)
+        if permissions == Permissions.NONE:
+            logger.info(f"[#{ctx.channel}]{ctx.author.name}: {ctx.content}")
+        else:
+            logger.info(f"[#{ctx.channel}]{ctx.author.name}({permissions.name}): {ctx.content}")
 
-    # Commands use a different decorator
-    @commands.command(name='test')
-    async def test_command(self, ctx):
-        await ctx.send(f'Hello {ctx.author.name}!')
+        await self.handle_commands(ctx)
+
+    @commands.command(name='bottest')
+    async def cmd_bottest(self, ctx):
+        """Check that the bot is connected
+        """
+        await ctx.send(f'/me is surviving and thriving MrDestructoid')
