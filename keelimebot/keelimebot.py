@@ -7,9 +7,10 @@ logger = logging.getLogger(__name__)
 
 class Keelimebot(commands.Bot):
 
-    def __init__(self, irc_token):
+    def __init__(self, irc_token, client_id):
         super().__init__(
             irc_token=irc_token,
+            client_id=client_id,
             nick='keelimebot',
             prefix='!',
             initial_channels=['keelimebot']
