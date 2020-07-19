@@ -44,6 +44,7 @@ class DefaultCommand(PermissionsCommand, UsageCommand):
             'aliases': self.aliases,
             'func': self._func,
             'no_global_checks': self.no_global_checks,
+            'usage': self._usage,
         }
 
 

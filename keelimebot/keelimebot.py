@@ -2,7 +2,6 @@ import itertools
 import datetime
 import inspect
 import logging
-import sys
 
 from twitchio.ext import commands as basecommands
 from twitchio import Context, Message
@@ -79,9 +78,9 @@ class Keelimebot(basecommands.Bot):
                         del self.commands[name]
 
                     if isinstance(args['func'], basecommands.Command):
-                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func']._func, no_global_checks=args['no_global_checks'])
+                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func']._func, no_global_checks=args['no_global_checks'], usage=args['usage'])
                     else:
-                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func'], no_global_checks=args['no_global_checks'])
+                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func'], no_global_checks=args['no_global_checks'], usage=args['usage'])
                     self.add_command(command)
 
         except FileNotFoundError:
@@ -146,12 +145,12 @@ class Keelimebot(basecommands.Bot):
         """Check that the bot is connected
         """
 
-        await ctx.send(f'/me is surviving and thriving MrDestructoid')
+        await ctx.send('/me is surviving and thriving MrDestructoid')
 
     @commands.command(name='addcommand', cls=commands.ModCommand,
-                      usage='<new_cmd> <response>')
+                      usage='<new_cmd> <action>')
     async def cmd_addcommand(ctx: Context):
         """Add a command in the channel
         """
 
-        await ctx.send(f"command was not added!")
+        await ctx.send('command was not added!')
