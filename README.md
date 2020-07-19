@@ -14,7 +14,7 @@ Python virtual environment is always recommended.
 `pip install -r requirements.txt`
 
 ### Testing
-`python -m unittest`
+`python -m unittest discover -s tests`
 
 ### Command line
 `python -m keelimebot.main -h`

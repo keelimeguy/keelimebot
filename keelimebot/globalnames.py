@@ -1,0 +1,1 @@
+BOTNAME = 'keelimebot'

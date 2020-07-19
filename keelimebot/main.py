@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(args):
-    keelimebot = Keelimebot(args.irc_token, args.client_id)
+    keelimebot = Keelimebot(args.irc_token, args.client_id, args.channel_data_dir)
     keelimebot.run()
 
 
@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true', help='print debug information')
     parser.add_argument('--irc_token', default='', help='Twitch IRC OAuth token')
     parser.add_argument('--client_id', default='', help='Twitch API Client ID')
+    parser.add_argument('--channel_data_dir', default='./channel_data_dir', help='Name of folder to keep channel data')
     args = parser.parse_args()
 
     if args.verbose:
