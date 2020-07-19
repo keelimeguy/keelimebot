@@ -1,3 +1,5 @@
+import logging
+
 from twitchio.ext import commands
 from twitchio import Context, Message
 from typing import *
@@ -5,6 +7,8 @@ from enum import Enum
 from abc import ABC, abstractmethod
 
 from .globalnames import BOTNAME
+
+logger = logging.getLogger(__name__)
 
 # Permissions listed in increasing order
 Permissions = Enum('Permissions', 'NONE SUBSCRIBER MODERATOR BOT STREAMER')
@@ -19,11 +23,21 @@ class PermissionsCommand(commands.Command, ABC):
         super().__init__(name, func, **attrs)
 
         self._checks.append(self.command_permissions_check)
+        self._func = func
 
-    def command_permissions_check(self, ctx: Context):
+    def serialize(self):
+        return {
+            'cls': self.__class__,
+            'name': self.name,
+            'aliases': self.aliases,
+            'func': self._func,
+            'no_global_checks': self.no_global_checks,
+        }
+
+    def command_permissions_check(self, ctx: Context) -> bool:
         """A command check that verifies that the appropriate permissions are met
         """
-        check_permissions(ctx.message, self.required_permissions, self.name)
+        return check_permissions(ctx.message, self.required_permissions, self.name)
 
     @property
     @abstractmethod
@@ -51,6 +65,12 @@ class SubscriberCommand(PermissionsCommand):
         return Permissions.SUBSCRIBER
 
 
+class DefaultCommand(PermissionsCommand):
+    @property
+    def required_permissions(self):
+        return Permissions.NONE
+
+
 def get_author_permissions(message: Message) -> Permissions:
     """Returns the permissions of the given message's author
     """
@@ -70,7 +90,7 @@ def get_author_permissions(message: Message) -> Permissions:
     return Permissions.NONE
 
 
-def check_permissions(message: Message, required_permissions: Permissions, command_name: str):
+def check_permissions(message: Message, required_permissions: Permissions, command_name: str) -> bool:
     """Determine if a user has the given required permissions
 
     :raises: PermissionsError
@@ -80,3 +100,5 @@ def check_permissions(message: Message, required_permissions: Permissions, comma
     if author_permissions.value < required_permissions.value:
         error_msg = f"{message.author} does not have required permissions to use !{command_name}"
         raise PermissionsError(error_msg)
+
+    return True
