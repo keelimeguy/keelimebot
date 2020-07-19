@@ -46,9 +46,11 @@ class Keelimebot(commands.Bot):
 
         timestamp = int(datetime.datetime.now().timestamp()*1000)
         if message.tags:
-            if abs(message.tags['tmi-sent-ts'] - timestamp) > 10000:
+            if abs(message.tags['tmi-sent-ts'] - timestamp) >= 10000:
                 logger.warning(f"timestamp is off by more than 10s: tags={message.tags['tmi-sent-ts']}ms, now={timestamp}ms")
             timestamp = message.tags['tmi-sent-ts']
+        else:
+            timestamp = str(timestamp)[:-4]+'XXXX'
 
         if author_permissions == Permissions.NONE:
             logger.info(f"{timestamp} [#{message.channel}] {message.author.name}: {message.content}")
