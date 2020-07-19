@@ -1,10 +1,8 @@
 import logging
 
-from twitchio.ext import commands
 from twitchio import Context, Message
 from typing import *
 from enum import Enum
-from abc import ABC, abstractmethod
 
 from .globalnames import BOTNAME
 
@@ -16,65 +14,6 @@ Permissions = Enum('Permissions', 'NONE SUBSCRIBER VIP MODERATOR BOT STREAMER')
 
 class PermissionsError(Exception):
     pass
-
-
-class PermissionsCommand(commands.Command, ABC):
-    def __init__(self, name: str, func, **attrs):
-        super().__init__(name, func, **attrs)
-
-        self._checks.append(self.command_permissions_check)
-        self._func = func
-
-    def serialize(self):
-        return {
-            'cls': self.__class__,
-            'name': self.name,
-            'aliases': self.aliases,
-            'func': self._func,
-            'no_global_checks': self.no_global_checks,
-        }
-
-    def command_permissions_check(self, ctx: Context) -> bool:
-        """A command check that verifies that the appropriate permissions are met
-        """
-        return check_permissions(ctx.message, self.required_permissions, self.name)
-
-    @property
-    @abstractmethod
-    def required_permissions(self):
-        """Returns the required permissions for the command
-        """
-        pass
-
-
-class StreamerCommand(PermissionsCommand):
-    @property
-    def required_permissions(self):
-        return Permissions.STREAMER
-
-
-class ModCommand(PermissionsCommand):
-    @property
-    def required_permissions(self):
-        return Permissions.MODERATOR
-
-
-class SubscriberCommand(PermissionsCommand):
-    @property
-    def required_permissions(self):
-        return Permissions.SUBSCRIBER
-
-
-class VipCommand(PermissionsCommand):
-    @property
-    def required_permissions(self):
-        return Permissions.VIP
-
-
-class DefaultCommand(PermissionsCommand):
-    @property
-    def required_permissions(self):
-        return Permissions.NONE
 
 
 def get_author_permissions(message: Message) -> Permissions:

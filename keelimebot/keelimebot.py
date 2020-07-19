@@ -2,12 +2,13 @@ import datetime
 import logging
 import sys
 
-from twitchio import Context, Message
 from twitchio.ext import commands
+from twitchio import Context, Message
 from typing import *
 
-from .permissions import Permissions, PermissionsError, ModCommand, get_author_permissions
+from .commands.commands import ModCommand
 from .globalnames import BOTNAME
+from .permissions import Permissions, PermissionsError, get_author_permissions
 from .serializer import json_deserialize_from_file, json_serialize_to_string
 
 logger = logging.getLogger(__name__)
