@@ -9,6 +9,7 @@ class PermissionsTestCase(unittest.TestCase):
             Permissions.STREAMER,
             Permissions.BOT,
             Permissions.MODERATOR,
+            Permissions.VIP,
             Permissions.SUBSCRIBER,
             Permissions.NONE,
         ]

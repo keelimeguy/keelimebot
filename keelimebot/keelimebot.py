@@ -43,11 +43,17 @@ class Keelimebot(commands.Bot):
         """
 
         author_permissions = get_author_permissions(message)
-        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+
+        timestamp = int(datetime.datetime.now().timestamp()*1000)
+        if message.tags:
+            if abs(message.tags['tmi-sent-ts'] - timestamp) > 10000:
+                logger.warning(f"timestamp is off by more than 10s: tags={message.tags['tmi-sent-ts']}ms, now={timestamp}ms")
+            timestamp = message.tags['tmi-sent-ts']
+
         if author_permissions == Permissions.NONE:
-            logger.info(f"{timestamp} [#{message.channel}]{message.author.name}: {message.content}")
+            logger.info(f"{timestamp} [#{message.channel}] {message.author.name}: {message.content}")
         else:
-            logger.info(f"{timestamp} [#{message.channel}]{message.author.name}({author_permissions.name}): {message.content}")
+            logger.info(f"{timestamp} [#{message.channel}] {message.author.name}({author_permissions.name}): {message.content}")
 
         await self.handle_commands(message)
 

@@ -11,7 +11,7 @@ from .globalnames import BOTNAME
 logger = logging.getLogger(__name__)
 
 # Permissions listed in increasing order
-Permissions = Enum('Permissions', 'NONE SUBSCRIBER MODERATOR BOT STREAMER')
+Permissions = Enum('Permissions', 'NONE SUBSCRIBER VIP MODERATOR BOT STREAMER')
 
 
 class PermissionsError(Exception):
@@ -65,6 +65,12 @@ class SubscriberCommand(PermissionsCommand):
         return Permissions.SUBSCRIBER
 
 
+class VipCommand(PermissionsCommand):
+    @property
+    def required_permissions(self):
+        return Permissions.VIP
+
+
 class DefaultCommand(PermissionsCommand):
     @property
     def required_permissions(self):
@@ -83,6 +89,9 @@ def get_author_permissions(message: Message) -> Permissions:
 
     elif message.author.is_mod:
         return Permissions.MODERATOR
+
+    elif message.tags and 'vip/1' in message.tags['badges'].split(','):
+        return Permissions.VIP
 
     elif message.author.is_subscriber:
         return Permissions.SUBSCRIBER
