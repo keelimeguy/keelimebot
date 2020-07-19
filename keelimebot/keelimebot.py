@@ -1,12 +1,14 @@
+import itertools
 import datetime
+import inspect
 import logging
 import sys
 
-from twitchio.ext import commands
+from twitchio.ext import commands as basecommands
 from twitchio import Context, Message
 from typing import *
 
-from .commands.commands import ModCommand
+from .commands import commands
 from .globalnames import BOTNAME
 from .permissions import Permissions, PermissionsError, get_author_permissions
 from .serializer import json_deserialize_from_file, json_serialize_to_string
@@ -14,7 +16,7 @@ from .serializer import json_deserialize_from_file, json_serialize_to_string
 logger = logging.getLogger(__name__)
 
 
-class Keelimebot(commands.Bot):
+class Keelimebot(basecommands.Bot):
     def __init__(self, irc_token: str, client_id: str, channel_data_dir: str = '.'):
         self.channel_data_dir = channel_data_dir
         self.lock_json = True
@@ -76,7 +78,7 @@ class Keelimebot(commands.Bot):
                     if name in self.commands:
                         del self.commands[name]
 
-                    if isinstance(args['func'], commands.Command):
+                    if isinstance(args['func'], basecommands.Command):
                         command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func']._func, no_global_checks=args['no_global_checks'])
                     else:
                         command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func'], no_global_checks=args['no_global_checks'])
@@ -92,22 +94,62 @@ class Keelimebot(commands.Bot):
         with open(f"{self.channel_data_dir}/commands.json", 'w') as f:
             f.write(json_serialize_to_string(self.commands))
 
-    def add_command(self, command: commands.Command):
+    async def _handle_checks(self, ctx, no_global_checks=False):
+        command = ctx.command
+
+        if no_global_checks:
+            checks = [predicate for predicate in command._checks]
+        else:
+            checks = [predicate for predicate in itertools.chain(self._checks, command._checks)]
+
+        if not checks:
+            return True
+
+        for predicate in checks:
+            if inspect.iscoroutinefunction(predicate):
+                result = await predicate(ctx)
+            else:
+                result = predicate(ctx)
+            if not result:
+                return predicate
+
+        return True
+
+    def add_command(self, command: commands.DefaultCommand):
         super().add_command(command)
         self.dump_commands_to_json_file()
 
-    def remove_command(self, command: commands.Command):
+    def remove_command(self, command: commands.DefaultCommand):
         super().remove_command(command)
         self.dump_commands_to_json_file()
 
-    @commands.command(name='bottest', cls=ModCommand)
+    def command(self, *, name: str = None, cls=commands.DefaultCommand, **kwargs):
+        """Decorator which registers a command on the bot.
+
+        Commands must be a coroutine.
+        """
+
+        if not inspect.isclass(cls):
+            raise TypeError(f"cls must be of type <class> not <{type(cls)}>")
+
+        def decorator(func):
+            cmd_name = name or func.__name__
+
+            command = cls(name=cmd_name, func=func, aliases=aliases, instance=None, **kwargs)
+            self.add_command(command)
+
+            return command
+        return decorator
+
+    @commands.command(name='bottest', cls=commands.ModCommand)
     async def cmd_bottest(ctx: Context):
         """Check that the bot is connected
         """
 
         await ctx.send(f'/me is surviving and thriving MrDestructoid')
 
-    @commands.command(name='addcommand', cls=ModCommand)
+    @commands.command(name='addcommand', cls=commands.ModCommand,
+                      usage='<new_cmd> <response>')
     async def cmd_addcommand(ctx: Context):
         """Add a command in the channel
         """
