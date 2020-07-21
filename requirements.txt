@@ -1,2 +1,2 @@
-git+https://github.com/TwitchIO/TwitchIO.git
+git+https://github.com/keelimeguy/TwitchIO.git
 jsonpickle>=1.4.1
