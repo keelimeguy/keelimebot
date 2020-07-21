@@ -1,7 +1,7 @@
 import inspect
 import logging
 
-from typing import *
+from typing import Union
 
 from keelimebot.permissions import Permissions
 from .permissions_command import PermissionsCommand
@@ -17,7 +17,7 @@ def command(*, name: str = None, aliases: Union[list, tuple] = None, cls=None, n
     if cls and not inspect.isclass(cls):
         raise TypeError(f'cls must be of type <class> not <{type(cls)}>')
 
-    cls = cls or Command
+    cls = cls or DefaultCommand
 
     def decorator(func):
         fname = name or func.__name__

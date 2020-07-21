@@ -1,7 +1,6 @@
 import logging
 
-from twitchio import Context, Message
-from typing import *
+from twitchio import Message
 from enum import Enum
 
 from .globalnames import BOTNAME

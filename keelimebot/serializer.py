@@ -11,7 +11,7 @@ pickled_keys = ['cls', 'func']
 def _serialize(obj):
     try:
         return obj.serialize()
-    except:
+    except Exception:
         return jsonpickle.encode(obj)
 
 

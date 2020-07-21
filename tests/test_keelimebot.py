@@ -67,7 +67,8 @@ class KeelimebotTestCase(unittest.TestCase):
         for msg, ret in test_cases.items():
             ctx = _Context(msg)
             loop = asyncio.get_event_loop()
-            self.assertEqual(ret, loop.run_until_complete(Keelimebot.get_args(ctx, required=required, optional=optional, check_args=check_args)).__dict__)
+            self.assertEqual(ret, loop.run_until_complete(Keelimebot.get_args(
+                ctx, required=required, optional=optional, check_args=check_args)).__dict__)
 
     def run_test_get_args_failure(self, test_cases, required=None, optional=None, check_args=None):
         for msg in test_cases:
@@ -76,7 +77,8 @@ class KeelimebotTestCase(unittest.TestCase):
 
             f = io.StringIO()
             with redirect_stderr(f):
-                self.assertRaises(CommandFormattingError, loop.run_until_complete, Keelimebot.get_args(ctx, required=required, optional=optional, check_args=check_args))
+                self.assertRaises(CommandFormattingError, loop.run_until_complete, Keelimebot.get_args(
+                    ctx, required=required, optional=optional, check_args=check_args))
 
     def test_get_args_empty(self):
         required = None

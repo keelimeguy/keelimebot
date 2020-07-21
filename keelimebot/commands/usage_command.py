@@ -4,13 +4,12 @@ import re
 
 from twitchio.ext import commands
 from twitchio import Context
-from typing import *
 from abc import ABC
 
 logger = logging.getLogger(__name__)
 
-USAGE_REQ = '<\w+?>'
-USAGE_OPT = '\[\w+?\]'
+USAGE_REQ = r'<\w+?>'
+USAGE_OPT = r'\[\w+?\]'
 usage_pattern = re.compile(f"^(({USAGE_REQ})( {USAGE_REQ})*?( {USAGE_OPT})*?)|(({USAGE_OPT})( {USAGE_OPT})*?)")
 
 

@@ -7,11 +7,11 @@ import shlex
 
 from twitchio.ext import commands as basecommands
 from twitchio import Context, Message
-from typing import *
+from typing import List, Union
 
 from .commands.usage_command import CommandFormattingError
 from .globalnames import BOTNAME
-from .permissions import Permissions, PermissionsError, get_author_permissions
+from .permissions import Permissions, get_author_permissions
 from .serializer import json_deserialize_from_file, json_serialize_to_string
 from .commands import commands
 
@@ -41,7 +41,7 @@ class Keelimebot(basecommands.Bot):
 
         logger.info(f'Ready | {self.nick}')
         for channel in self.initial_channels:
-            await self._ws.send_privmsg(channel, f"/me has landed!")
+            await self._ws.send_privmsg(channel, '/me has landed!')
 
     async def event_message(self, message: Message):
         """Called once when a message is posted in chat.
@@ -60,7 +60,8 @@ class Keelimebot(basecommands.Bot):
         if author_permissions == Permissions.NONE:
             logger.info(f"{timestamp} [#{message.channel}] {message.author.name}: {message.content}")
         else:
-            logger.info(f"{timestamp} [#{message.channel}] {message.author.name}({author_permissions.name}): {message.content}")
+            logger.info(f"{timestamp} [#{message.channel}] "
+                        f"{message.author.name}({author_permissions.name}): {message.content}")
 
         await self.handle_commands(message)
 
@@ -81,9 +82,11 @@ class Keelimebot(basecommands.Bot):
                         del self.commands[name]
 
                     if isinstance(args['func'], basecommands.Command):
-                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func']._func, no_global_checks=args['no_global_checks'], usage=args['usage'])
+                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func']._func,
+                                              no_global_checks=args['no_global_checks'], usage=args['usage'])
                     else:
-                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func'], no_global_checks=args['no_global_checks'], usage=args['usage'])
+                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func'],
+                                              no_global_checks=args['no_global_checks'], usage=args['usage'])
                     self.add_command(command)
 
         except FileNotFoundError:
@@ -125,7 +128,7 @@ class Keelimebot(basecommands.Bot):
         super().remove_command(command)
         self.dump_commands_to_json_file()
 
-    def command(self, *, name: str = None, cls=commands.DefaultCommand, **kwargs):
+    def command(self, *, name: str = None, aliases: Union[list, tuple] = None, cls=commands.DefaultCommand, **kwargs):
         """Decorator which registers a command on the bot.
 
         Commands must be a coroutine.
@@ -188,5 +191,5 @@ class Keelimebot(basecommands.Bot):
             assert(len(args.new_cmd.split()) == 1)
             return True
 
-        args = await Keelimebot.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
+        _ = await Keelimebot.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
         await ctx.send('not implemented!')
