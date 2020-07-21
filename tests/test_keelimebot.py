@@ -115,6 +115,7 @@ class KeelimebotTestCase(unittest.TestCase):
         self.run_test_get_args_failure(test_cases, required=required, optional=optional, check_args=check_args)
 
         required = ['a', 'b']
+        test_cases.append('!test 1')
         self.run_test_get_args_failure(test_cases, required=required, optional=optional, check_args=check_args)
 
     def test_get_args_optional(self):
@@ -135,10 +136,6 @@ class KeelimebotTestCase(unittest.TestCase):
             '!test "1 2 3"': {'a': '1 2 3', 'b': None},
             '!test \'1 2 3\'': {'a': '1 2 3', 'b': None},
             '!test': {'a': None, 'b': None},
-        }
-        self.run_test_get_args(test_cases, required=required, optional=optional, check_args=check_args)
-
-        test_cases = {
             '!test 123 456': {'a': '123', 'b': '456'},
         }
         self.run_test_get_args(test_cases, required=required, optional=optional, check_args=check_args)
