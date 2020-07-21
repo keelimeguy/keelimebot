@@ -38,6 +38,10 @@ class UsageCommandTestCase(unittest.TestCase):
             'a',
             ' <a>',
             ' [a]',
+            '<a> <a>',
+            '<a> [a]',
+            '[a] [a]',
+            '[a] <a>',
         ]
         for case in fail_cases:
             self.assertRaises(UsageFormattingError, parse_usage, case)

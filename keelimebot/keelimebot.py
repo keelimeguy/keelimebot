@@ -1,16 +1,19 @@
 import itertools
+import argparse
 import datetime
 import inspect
 import logging
+import shlex
 
 from twitchio.ext import commands as basecommands
 from twitchio import Context, Message
 from typing import *
 
-from .commands import commands
+from .commands.usage_command import CommandFormattingError
 from .globalnames import BOTNAME
 from .permissions import Permissions, PermissionsError, get_author_permissions
 from .serializer import json_deserialize_from_file, json_serialize_to_string
+from .commands import commands
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +143,32 @@ class Keelimebot(basecommands.Bot):
             return command
         return decorator
 
+    @staticmethod
+    async def get_args(ctx: Context, required: List[str] = None, optional: List[str] = None, check_args=None):
+        """Get the parsed arguments from the command message
+
+        :raises: CommandFormattingError
+        """
+
+        try:
+            parser = argparse.ArgumentParser()
+            if required:
+                for arg in required:
+                    parser.add_argument(arg)
+            if optional:
+                for arg in optional:
+                    parser.add_argument(arg, nargs='?', default=None)
+            args = parser.parse_args(shlex.split(ctx.content)[1:])
+
+            if check_args:
+                assert(check_args(args))
+
+        except (SystemExit, AssertionError, ValueError):
+            await ctx.send('command was not added!')
+            raise CommandFormattingError(f"Malformed command: {ctx.content}")
+
+        return args
+
     @commands.command(name='bottest', cls=commands.ModCommand)
     async def cmd_bottest(ctx: Context):
         """Check that the bot is connected
@@ -151,6 +180,13 @@ class Keelimebot(basecommands.Bot):
                       usage='<new_cmd> <action>')
     async def cmd_addcommand(ctx: Context):
         """Add a command in the channel
+
+        :raises: CommandFormattingError (from Keelimebot.get_args)
         """
 
-        await ctx.send('command was not added!')
+        def check_args(args) -> bool:
+            assert(len(args.new_cmd.split()) == 1)
+            return True
+
+        args = await Keelimebot.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
+        await ctx.send('not implemented!')
