@@ -1,3 +1,4 @@
+import threading
 import itertools
 import argparse
 import datetime
@@ -18,7 +19,7 @@ from .commands import commands
 logger = logging.getLogger(__name__)
 
 
-class Keelimebot(basecommands.Bot):
+class Keelimebot(basecommands.Bot, threading.Thread):
     __instance__ = None
 
     @classmethod
@@ -30,6 +31,8 @@ class Keelimebot(basecommands.Bot):
             Keelimebot.__instance__ = self
         else:
             raise RuntimeError("You cannot create another instance of Keelimebot")
+
+        threading.Thread.__init__(self)
 
         self.channel_data_dir = channel_data_dir
         self.lock_json = True
@@ -55,6 +58,9 @@ class Keelimebot(basecommands.Bot):
 
         self.add_commands_from_json_file(f"{self.channel_data_dir}/commands.json")
         self.lock_json = False
+
+    def start(self):
+        threading.Thread.start(self)
 
     async def event_ready(self):
         """Called once when the bot goes online.
