@@ -12,7 +12,7 @@ My custom bot for Twitch.
 |**!help**||*Provides link to this repository*|Any|
 
 ## Usage
-For developers wishing to build their own bots, read on.
+**For developers wishing to build their own bots, read on.**
 
 Python virtual environment is always recommended.
 
