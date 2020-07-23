@@ -4,8 +4,8 @@ import io
 
 from contextlib import redirect_stderr
 
-from keelimebot.keelimebot import Keelimebot
 from keelimebot.commands.usage_command import CommandFormattingError
+from keelimebot.keelimebot import Keelimebot
 
 
 class _Context:

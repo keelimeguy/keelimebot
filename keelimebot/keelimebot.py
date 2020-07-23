@@ -19,7 +19,18 @@ logger = logging.getLogger(__name__)
 
 
 class Keelimebot(basecommands.Bot):
+    __instance__ = None
+
+    @classmethod
+    def get_instance(cls):
+        return cls.__instance__
+
     def __init__(self, irc_token: str, client_id: str, channel_data_dir: str = '.'):
+        if Keelimebot.__instance__ is None:
+            Keelimebot.__instance__ = self
+        else:
+            raise RuntimeError("You cannot create another instance of Keelimebot")
+
         self.channel_data_dir = channel_data_dir
         self.lock_json = True
 
@@ -82,11 +93,13 @@ class Keelimebot(basecommands.Bot):
                         del self.commands[name]
 
                     if isinstance(args['func'], basecommands.Command):
-                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func']._func,
-                                              no_global_checks=args['no_global_checks'], usage=args['usage'])
+                        command = args['cls'](name=args['name'], func=args['func']._func, text=args['text'],
+                                              aliases=args['aliases'], usage=args['usage'],
+                                              no_global_checks=args['no_global_checks'])
                     else:
-                        command = args['cls'](name=args['name'], aliases=args['aliases'], func=args['func'],
-                                              no_global_checks=args['no_global_checks'], usage=args['usage'])
+                        command = args['cls'](name=args['name'], func=args['func'], text=args['text'],
+                                              aliases=args['aliases'], usage=args['usage'],
+                                              no_global_checks=args['no_global_checks'])
                     self.add_command(command)
 
         except FileNotFoundError:
@@ -191,5 +204,9 @@ class Keelimebot(basecommands.Bot):
             assert(len(args.new_cmd.split()) == 1)
             return True
 
-        _ = await Keelimebot.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
-        await ctx.send('not implemented!')
+        args = await Keelimebot.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
+        command = commands.DefaultCommand(name=args.new_cmd, text=args.action)
+
+        keelimebot = Keelimebot.get_instance()
+        if keelimebot:
+            keelimebot.add_command(command)

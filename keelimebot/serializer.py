@@ -23,7 +23,8 @@ def _deserialize(obj: dict) -> dict:
             new_obj[k] = _deserialize(v)
 
         elif k in pickled_keys:
-            new_obj[k] = jsonpickle.decode(v)
+            if v:
+                new_obj[k] = jsonpickle.decode(v)
 
     return new_obj
 

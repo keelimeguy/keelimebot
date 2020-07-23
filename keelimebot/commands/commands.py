@@ -1,6 +1,7 @@
 import inspect
 import logging
 
+from twitchio import Context
 from typing import Union
 
 from keelimebot.permissions import Permissions
@@ -28,21 +29,39 @@ def command(*, name: str = None, aliases: Union[list, tuple] = None, cls=None, n
 
 
 class DefaultCommand(PermissionsCommand, UsageCommand):
-    def __init__(self, name: str, func, **attrs):
-        super().__init__(name, func, **attrs)
+    def __init__(self, name: str, func=None, text: str = None, **attrs):
+        if func is None:
+            assert(text is not None)
+            self._func = self.cmd_textcommand
+        else:
+            self._func = func
 
-        self._func = func
+        super().__init__(name, self._func, **attrs)
+
+        self.text = text
+        if self.text is not None:
+            assert(func is None)
+
+    async def cmd_textcommand(self, ctx: Context):
+        await ctx.send(self.text)
 
     @property
     def required_permissions(self):
         return Permissions.NONE
 
     def serialize(self) -> dict:
+
+        if self.text is None:
+            func = self._func
+        else:
+            func = None
+
         return {
             'cls': self.__class__,
             'name': self.name,
             'aliases': self.aliases,
-            'func': self._func,
+            'func': func,
+            'text': self.text,
             'no_global_checks': self.no_global_checks,
             'usage': self._usage,
         }
