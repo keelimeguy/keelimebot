@@ -7,9 +7,9 @@ My custom bot for Twitch.
 |----------|-----------|-----------|-----------|
 |**!addcommand**|\<new_cmd> \<action>|*Add a command in the channel*|Moderator|
 |**!delcommand**|\<cmd>|*Remove a command from the channel*|Moderator|
-|**!bottest**|n/a|*Check that the bot is connected*|Moderator|
-|**!commandlist**|n/a|*Provides the list of commands created with !addcommand*|Any|
-|**!help**|n/a|*Provides link to this repository*|Any|
+|**!bottest**||*Check that the bot is connected*|Moderator|
+|**!commandlist**||*Provides the list of commands created with !addcommand*|Any|
+|**!help**||*Provides link to this repository*|Any|
 
 ## Usage
 For developers wishing to build their own bots, read on.
