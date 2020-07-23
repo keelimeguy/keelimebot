@@ -33,6 +33,8 @@ class Keelimebot(basecommands.Bot):
 
         self.channel_data_dir = channel_data_dir
         self.lock_json = True
+        self.commandlist = {}
+        self.excluded_commands = []
 
         super().__init__(
             irc_token=irc_token,
@@ -42,9 +44,17 @@ class Keelimebot(basecommands.Bot):
             initial_channels=['keelimebot']
         )
 
+        self.excluded_commands = list(self.commands.keys()) + list(self._aliases.keys())
+        self.commandlist = {}
+
         self.add_commands_from_json_file(f"{self.channel_data_dir}/commands.json")
+
         self.lock_json = False
         self.dump_commands_to_json_file()
+        self.lock_json = True
+
+        self.add_commands_from_json_file(f"{self.channel_data_dir}/commands.json")
+        self.lock_json = False
 
     async def event_ready(self):
         """Called once when the bot goes online.
@@ -135,10 +145,21 @@ class Keelimebot(basecommands.Bot):
 
     def add_command(self, command: commands.DefaultCommand):
         super().add_command(command)
+
+        if command.name not in self.excluded_commands:
+            if command.required_permissions == Permissions.NONE:
+                self.commandlist[command.name] = f"{command.name}"
+            else:
+                self.commandlist[command.name] = f"{command.name} [{command.required_permissions.name[:3]}]"
+
         self.dump_commands_to_json_file()
 
     def remove_command(self, command: commands.DefaultCommand):
         super().remove_command(command)
+
+        if command.name in self.commandlist:
+            del self.commandlist[command.name]
+
         self.dump_commands_to_json_file()
 
     def command(self, *, name: str = None, aliases: Union[list, tuple] = None, cls=commands.DefaultCommand, **kwargs):
@@ -185,14 +206,37 @@ class Keelimebot(basecommands.Bot):
 
         return args
 
-    @commands.command(name='bottest', cls=commands.ModCommand)
-    async def cmd_bottest(ctx: Context):
-        """Check that the bot is connected
+    ########################
+    # Commands
+    ########################
+
+    @commands.command(name='commandlist',
+                      aliases=['cmdlist', 'newcmds', 'newcommands', 'addedcmds', 'addedcommands']
+                      )
+    async def cmd_commandlist(ctx: Context):
+        """Provides the list of commands created with !addcommand
         """
 
-        await ctx.send('/me is surviving and thriving MrDestructoid')
+        keelimebot = Keelimebot.get_instance()
+        if keelimebot:
+            await ctx.send(' , '.join(keelimebot.commandlist.values()))
 
-    @commands.command(name='addcommand', cls=commands.ModCommand,
+    @commands.command(name='help', aliases=['commands', 'github', 'code', 'source', 'bot'])
+    async def cmd_help(ctx: Context):
+        """Provides link to this repository
+        """
+
+        await ctx.send('https://github.com/keelimeguy/keelimebot')
+
+    ########################
+    # Mod Commands
+    ########################
+
+    @commands.command(name='addcommand',
+                      aliases=[
+                          'addcmd', 'newcommand', 'newcmd'
+                      ],
+                      cls=commands.ModCommand,
                       usage='<new_cmd> <action>')
     async def cmd_addcommand(ctx: Context):
         """Add a command in the channel
@@ -205,8 +249,55 @@ class Keelimebot(basecommands.Bot):
             return True
 
         args = await Keelimebot.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
-        command = commands.DefaultCommand(name=args.new_cmd, text=args.action)
 
         keelimebot = Keelimebot.get_instance()
         if keelimebot:
-            keelimebot.add_command(command)
+
+            if args.new_cmd in keelimebot.commands:
+                await ctx.send(f"!{args.new_cmd} already exists 4Head")
+
+            else:
+                command = commands.DefaultCommand(name=args.new_cmd, text=args.action)
+                keelimebot.add_command(command)
+                await ctx.send(f"!{args.new_cmd} was added successfully EZ Clap")
+
+    @commands.command(name='delcommand',
+                      aliases=[
+                          'rmcmd', 'delcmd', 'removecommand', 'deletecommand', 'rmcommand'
+                      ],
+                      cls=commands.ModCommand,
+                      usage='<cmd>')
+    async def cmd_delcommand(ctx: Context):
+        """Remove a command from the channel
+
+        :raises: CommandFormattingError (from Keelimebot.get_args)
+        """
+
+        def check_args(args) -> bool:
+            assert(len(args.cmd.split()) == 1)
+            return True
+
+        args = await Keelimebot.get_args(ctx, required=['cmd'], optional=[], check_args=check_args)
+
+        keelimebot = Keelimebot.get_instance()
+        if keelimebot:
+
+            if args.cmd in keelimebot.commands:
+
+                if args.cmd in keelimebot.excluded_commands:
+                    await ctx.send(f"!{args.cmd} cannot be removed LUL")
+
+                else:
+                    command = keelimebot.commands[args.cmd]
+                    keelimebot.remove_command(command)
+                    await ctx.send(f"!{args.cmd} is gone forever PepeHands")
+
+            else:
+                await ctx.send(f"!{args.cmd} doesn't even exist LUL")
+
+    @commands.command(name='bottest', aliases=['test', 'ping'], cls=commands.ModCommand)
+    async def cmd_bottest(ctx: Context):
+        """Check that the bot is connected
+        """
+
+        await ctx.send('/me is surviving and thriving MrDestructoid')
