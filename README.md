@@ -1,6 +1,6 @@
 # Keelimebot
 
-My custom bot for Twitch.
+My custom bot for Twitch/Discord.
 
 ## Commands
 |Command|Parameters|Description|Permissions
@@ -17,6 +17,8 @@ My custom bot for Twitch.
 Python virtual environment is always recommended.
 
 ### Tokens
+
+#### Twitch
 Get an IRC OAuth token [here](https://twitchapps.com/tmi/).
 
 Get a Client ID [here](https://dev.twitch.tv/console/apps/create).
@@ -29,3 +31,6 @@ Get a Client ID [here](https://dev.twitch.tv/console/apps/create).
 
 ### Command line
 `python -m keelimebot.main -h`
+
+## TODO
+- Check updates in requirement submodules
