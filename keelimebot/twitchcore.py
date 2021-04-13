@@ -223,9 +223,9 @@ class TwitchCore(basecommands.Bot, threading.Thread):
         """Provides the list of commands created with !addcommand
         """
 
-        TwitchCore = TwitchCore.get_instance()
-        if TwitchCore:
-            await ctx.send(' , '.join(TwitchCore.commandlist.values()))
+        core = TwitchCore.get_instance()
+        if core:
+            await ctx.send(' , '.join(core.commandlist.values()))
 
     @commands.command(name='help', aliases=['commands', 'github', 'code', 'source', 'bot'])
     async def cmd_help(ctx: Context):
@@ -256,15 +256,15 @@ class TwitchCore(basecommands.Bot, threading.Thread):
 
         args = await TwitchCore.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
 
-        TwitchCore = TwitchCore.get_instance()
-        if TwitchCore:
+        core = TwitchCore.get_instance()
+        if core:
 
-            if args.new_cmd in TwitchCore.commands:
+            if args.new_cmd in core.commands:
                 await ctx.send(f"!{args.new_cmd} already exists 4Head")
 
             else:
                 command = commands.DefaultCommand(name=args.new_cmd, text=args.action)
-                TwitchCore.add_command(command)
+                core.add_command(command)
                 await ctx.send(f"!{args.new_cmd} was added successfully EZ Clap")
 
     @commands.command(name='delcommand',
@@ -285,17 +285,17 @@ class TwitchCore(basecommands.Bot, threading.Thread):
 
         args = await TwitchCore.get_args(ctx, required=['cmd'], optional=[], check_args=check_args)
 
-        TwitchCore = TwitchCore.get_instance()
-        if TwitchCore:
+        core = TwitchCore.get_instance()
+        if core:
 
-            if args.cmd in TwitchCore.commands:
+            if args.cmd in core.commands:
 
-                if args.cmd in TwitchCore.excluded_commands:
+                if args.cmd in core.excluded_commands:
                     await ctx.send(f"!{args.cmd} cannot be removed LUL")
 
                 else:
-                    command = TwitchCore.commands[args.cmd]
-                    TwitchCore.remove_command(command)
+                    command = core.commands[args.cmd]
+                    core.remove_command(command)
                     await ctx.send(f"!{args.cmd} is gone forever PepeHands")
 
             else:

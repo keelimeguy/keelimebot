@@ -5,7 +5,7 @@ import io
 from contextlib import redirect_stderr
 
 from keelimebot.commands.usage_command import CommandFormattingError
-from keelimebot.keelimebot import Keelimebot
+from keelimebot.twitchcore import TwitchCore
 
 
 class _Context:
@@ -16,7 +16,7 @@ class _Context:
         pass
 
 
-class KeelimebotTestCase(unittest.TestCase):
+class TwitchCoreTestCase(unittest.TestCase):
 
     def test_cmd_addcommand_failure(self):
         fail_cases = [
@@ -41,7 +41,7 @@ class KeelimebotTestCase(unittest.TestCase):
 
             f = io.StringIO()
             with redirect_stderr(f):
-                self.assertRaises(CommandFormattingError, loop.run_until_complete, Keelimebot.cmd_addcommand._func(ctx))
+                self.assertRaises(CommandFormattingError, loop.run_until_complete, TwitchCore.cmd_addcommand._func(ctx))
 
         for case in fail_cases:
             assertFails(f"!addcommand {case}")
@@ -58,7 +58,7 @@ class KeelimebotTestCase(unittest.TestCase):
         def assertSuccess(msg):
             ctx = _Context(msg)
             loop = asyncio.get_event_loop()
-            self.assertEqual(None, loop.run_until_complete(Keelimebot.cmd_addcommand._func(ctx)))
+            self.assertEqual(None, loop.run_until_complete(TwitchCore.cmd_addcommand._func(ctx)))
 
         for case in success_cases:
             assertSuccess(f"!addcommand {case}")
@@ -67,7 +67,7 @@ class KeelimebotTestCase(unittest.TestCase):
         for msg, ret in test_cases.items():
             ctx = _Context(msg)
             loop = asyncio.get_event_loop()
-            self.assertEqual(ret, loop.run_until_complete(Keelimebot.get_args(
+            self.assertEqual(ret, loop.run_until_complete(TwitchCore.get_args(
                 ctx, required=required, optional=optional, check_args=check_args)).__dict__)
 
     def run_test_get_args_failure(self, test_cases, required=None, optional=None, check_args=None):
@@ -77,7 +77,7 @@ class KeelimebotTestCase(unittest.TestCase):
 
             f = io.StringIO()
             with redirect_stderr(f):
-                self.assertRaises(CommandFormattingError, loop.run_until_complete, Keelimebot.get_args(
+                self.assertRaises(CommandFormattingError, loop.run_until_complete, TwitchCore.get_args(
                     ctx, required=required, optional=optional, check_args=check_args))
 
     def test_get_args_empty(self):

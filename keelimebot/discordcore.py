@@ -1,5 +1,6 @@
 import threading
 
+
 class DiscordCore(threading.Thread):
     __instance__ = None
 

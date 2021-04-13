@@ -1,10 +1,5 @@
 import threading
-import itertools
-import argparse
-import datetime
-import inspect
 import logging
-import shlex
 
 from keelimebot.twitchcore import TwitchCore
 from keelimebot.discordcore import DiscordCore
