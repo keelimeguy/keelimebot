@@ -1,4 +1,6 @@
 # Keelimebot
+![build-status-master](https://github.com/keelimeguy/keelimebot/actions/workflows/python-app.yml/badge.svg?branch=master)
+[![GitHub license](https://img.shields.io/github/license/keelimeguy/keelimebot)](https://github.com/keelimeguy/keelimebot/blob/master/LICENSE)
 
 My custom bot for Twitch/Discord.
 

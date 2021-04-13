@@ -1,4 +1,11 @@
+# python
 __pycache__/
 venv/
+
+# python coverage
+.coverage
+/htmlcov/
+
+# app
 /data/
 *.pem
