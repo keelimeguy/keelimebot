@@ -1,6 +1,6 @@
 import unittest
 
-from keelimebot.commands.usage_command import UsageFormattingError, parse_usage
+from keelimebot.twitch.commands.usage_command import UsageFormattingError, parse_usage
 
 
 class UsageCommandTestCase(unittest.TestCase):

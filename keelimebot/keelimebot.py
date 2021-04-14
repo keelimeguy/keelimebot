@@ -1,8 +1,8 @@
 import threading
 import logging
 
-from keelimebot.twitchcore import TwitchCore
-from keelimebot.discordcore import DiscordCore
+from keelimebot.twitch.twitch_core import TwitchCore
+from keelimebot.discord.discord_core import DiscordCore
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +23,13 @@ class Keelimebot(threading.Thread):
         threading.Thread.__init__(self)
 
         if args.bot_type == "twitch":
-            self.core = TwitchCore(args.irc_token, args.client_id, channel_data_dir=args.channel_data_dir)
+            self.core = TwitchCore(prefix=args.prefix, channel_data_dir=args.channel_data_dir)
 
         elif args.bot_type == "discord":
-            self.core = DiscordCore()
+            self.core = DiscordCore(prefix=args.prefix, channel_data_dir=args.channel_data_dir)
 
         else:
             raise RuntimeError(f'Bad bot_type: "{args.bot_type}"')
 
-    def start(self):
-        self.core.start()
+    def run(self):
+        self.core.run_bot()

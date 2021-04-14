@@ -70,7 +70,19 @@ class UsageCommand(commands.Command, ABC):
             return True
 
         async def failure():
-            await ctx.send(f"usage: !{self.name} {self.usage}")
+            index = -1
+
+            names = [self.name]
+            if self.aliases:
+                names += self.aliases
+
+            for name in names:
+                index = ctx.content.find(name)
+                if index != -1:
+                    break
+
+            prefix = ctx.content[:index] if index != -1 else '!'
+            await ctx.send(f"usage: {prefix}{self.name} {self.usage}")
             raise CommandFormattingError(f"wrong number of arguments: {ctx.content}")
 
         try:

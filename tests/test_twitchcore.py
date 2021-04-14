@@ -4,8 +4,8 @@ import io
 
 from contextlib import redirect_stderr
 
-from keelimebot.commands.usage_command import CommandFormattingError
-from keelimebot.twitchcore import TwitchCore
+from keelimebot.twitch.commands.usage_command import CommandFormattingError
+from keelimebot.twitch.twitch_core import TwitchCore
 
 
 class _Context:

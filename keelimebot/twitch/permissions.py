@@ -1,9 +1,8 @@
 import logging
+import os
 
 from twitchio import Message
 from enum import Enum
-
-from .globalnames import BOTNAME
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ def get_author_permissions(message: Message) -> Permissions:
     if message.tags and message.tags['room-id'] == message.author.id:
         return Permissions.STREAMER
 
-    elif message.author.name.lower() == BOTNAME:
+    elif message.author.name.lower() == os.getenv('BOTNAME'):
         return Permissions.BOT
 
     elif message.author.is_mod:

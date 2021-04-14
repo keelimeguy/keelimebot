@@ -25,6 +25,19 @@ Get an IRC OAuth token [here](https://twitchapps.com/tmi/).
 
 Get a Client ID [here](https://dev.twitch.tv/console/apps/create).
 
+#### Discord
+Create your bot application and find a token [here](https://discord.com/developers/applications).
+
+### Environment
+The following environment variables are used by the program:
+
+- BOTNAME=the name for your bot
+- TWITCH_CHANNEL=channel to connect to (for twitch bots)
+- TWITCH_TOKEN=IRC OAuth token (for twitch bots)
+- TWITCH_ID=Client ID (for twitch bots)
+- DISCORD_TOKEN= Bot token (for discord bots)
+- DISCORD_OWNER_ID= User ID of bot owner (for discord bots)
+
 ### Requirements
 `pip install -r requirements.txt`
 
@@ -35,4 +48,4 @@ Get a Client ID [here](https://dev.twitch.tv/console/apps/create).
 `python -m keelimebot.main -h`
 
 ## TODO
-- Check updates in requirement submodules
+- Check updates in requirement submodules..

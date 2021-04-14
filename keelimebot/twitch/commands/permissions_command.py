@@ -4,7 +4,7 @@ from twitchio.ext import commands
 from twitchio import Context
 from abc import ABC, abstractmethod
 
-from keelimebot.permissions import Permissions, check_permissions
+from keelimebot.twitch.permissions import Permissions, check_permissions
 
 logger = logging.getLogger(__name__)
 

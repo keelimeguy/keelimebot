@@ -1,6 +1,6 @@
 import unittest
 
-from keelimebot.permissions import Permissions
+from keelimebot.twitch.permissions import Permissions
 
 
 class PermissionsTestCase(unittest.TestCase):

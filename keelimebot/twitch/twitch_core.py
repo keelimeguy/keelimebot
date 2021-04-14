@@ -1,66 +1,59 @@
-import threading
 import itertools
 import argparse
 import datetime
 import inspect
 import logging
 import shlex
+import os
 
 from twitchio.ext import commands as basecommands
 from twitchio import Context, Message
 from typing import List, Union
 
+from keelimebot.serializer import json_deserialize_from_file, json_serialize_to_string
 from .commands.usage_command import CommandFormattingError
-from .globalnames import BOTNAME
 from .permissions import Permissions, get_author_permissions
-from .serializer import json_deserialize_from_file, json_serialize_to_string
 from .commands import commands
 
 logger = logging.getLogger(__name__)
 
 
-class TwitchCore(basecommands.Bot, threading.Thread):
+class TwitchCore(basecommands.Bot):
     __instance__ = None
 
     @classmethod
     def get_instance(cls):
         return cls.__instance__
 
-    def __init__(self, irc_token: str, client_id: str, channel_data_dir: str = '.'):
+    def __init__(self, prefix='!', channel_data_dir: str = '.'):
         if TwitchCore.__instance__ is None:
             TwitchCore.__instance__ = self
         else:
             raise RuntimeError("You cannot create another instance of TwitchCore")
 
-        threading.Thread.__init__(self)
-
-        self.channel_data_dir = channel_data_dir
-        self.lock_json = True
-        self.commandlist = {}
-        self.excluded_commands = []
+        self._channel_data_dir = channel_data_dir
+        self._lock_json = True
+        self._commandlist = {}
+        self._excluded_commands = []
 
         super().__init__(
-            irc_token=irc_token,
-            client_id=client_id,
-            nick=BOTNAME,
-            prefix='!',
-            initial_channels=['keelimebot']
+            irc_token=os.getenv('TWITCH_TOKEN'),
+            client_id=os.getenv('TWITCH_ID'),
+            nick=os.getenv('BOTNAME'),
+            prefix=prefix,
+            initial_channels=[os.getenv('TWITCH_CHANNEL')]
         )
 
-        self.excluded_commands = list(self.commands.keys()) + list(self._aliases.keys())
-        self.commandlist = {}
+        self._excluded_commands = list(self.commands.keys()) + list(self._aliases.keys())
+        self._commandlist = {}
+        self._lock_json = False
 
-        self.add_commands_from_json_file(f"{self.channel_data_dir}/commands.json")
-
-        self.lock_json = False
+        self.add_commands_from_json_file(f"{self._channel_data_dir}/twitch_commands.json")
         self.dump_commands_to_json_file()
-        self.lock_json = True
+        self.add_commands_from_json_file(f"{self._channel_data_dir}/twitch_commands.json")
 
-        self.add_commands_from_json_file(f"{self.channel_data_dir}/commands.json")
-        self.lock_json = False
-
-    def start(self):
-        threading.Thread.start(self)
+    def run_bot(self):
+        super().run()
 
     async def event_ready(self):
         """Called once when the bot goes online.
@@ -78,8 +71,8 @@ class TwitchCore(basecommands.Bot, threading.Thread):
 
         timestamp = int(datetime.datetime.now().timestamp()*1000)
         if message.tags:
-            if abs(message.tags['tmi-sent-ts'] - timestamp) >= 10000:
-                logger.warning(f"timestamp is off by more than 10s: tags={message.tags['tmi-sent-ts']}ms, now={timestamp}ms")
+            if abs(message.tags['tmi-sent-ts'] - timestamp) >= 1000:
+                logger.warning(f"timestamp is off by more than 1s: tags={message.tags['tmi-sent-ts']}ms, now={timestamp}ms")
             timestamp = message.tags['tmi-sent-ts']
         else:
             timestamp = str(timestamp)[:-4]+'XXXX'
@@ -100,6 +93,8 @@ class TwitchCore(basecommands.Bot, threading.Thread):
         logger.debug('', exc_info=True)
 
     def add_commands_from_json_file(self, filename: str):
+        self._lock_json = True
+
         try:
             with open(filename, 'r') as f:
                 command_dict = json_deserialize_from_file(f)
@@ -121,11 +116,13 @@ class TwitchCore(basecommands.Bot, threading.Thread):
         except FileNotFoundError:
             pass
 
+        self._lock_json = False
+
     def dump_commands_to_json_file(self):
-        if self.lock_json:
+        if self._lock_json:
             return
 
-        with open(f"{self.channel_data_dir}/commands.json", 'w') as f:
+        with open(f"{self._channel_data_dir}/twitch_commands.json", 'w') as f:
             f.write(json_serialize_to_string(self.commands))
 
     async def _handle_checks(self, ctx, no_global_checks=False):
@@ -152,19 +149,19 @@ class TwitchCore(basecommands.Bot, threading.Thread):
     def add_command(self, command: commands.DefaultCommand):
         super().add_command(command)
 
-        if command.name not in self.excluded_commands:
+        if command.name not in self._excluded_commands:
             if command.required_permissions == Permissions.NONE:
-                self.commandlist[command.name] = f"{command.name}"
+                self._commandlist[command.name] = f"{command.name}"
             else:
-                self.commandlist[command.name] = f"{command.name} [{command.required_permissions.name[:3]}]"
+                self._commandlist[command.name] = f"{command.name} [{command.required_permissions.name[:3]}]"
 
         self.dump_commands_to_json_file()
 
     def remove_command(self, command: commands.DefaultCommand):
         super().remove_command(command)
 
-        if command.name in self.commandlist:
-            del self.commandlist[command.name]
+        if command.name in self._commandlist:
+            del self._commandlist[command.name]
 
         self.dump_commands_to_json_file()
 
@@ -260,12 +257,12 @@ class TwitchCore(basecommands.Bot, threading.Thread):
         if core:
 
             if args.new_cmd in core.commands:
-                await ctx.send(f"!{args.new_cmd} already exists 4Head")
+                await ctx.send(f"{core.prefix}{args.new_cmd} already exists 4Head")
 
             else:
                 command = commands.DefaultCommand(name=args.new_cmd, text=args.action)
                 core.add_command(command)
-                await ctx.send(f"!{args.new_cmd} was added successfully EZ Clap")
+                await ctx.send(f"{core.prefix}{args.new_cmd} was added successfully EZ Clap")
 
     @commands.command(name='delcommand',
                       aliases=[
@@ -291,15 +288,15 @@ class TwitchCore(basecommands.Bot, threading.Thread):
             if args.cmd in core.commands:
 
                 if args.cmd in core.excluded_commands:
-                    await ctx.send(f"!{args.cmd} cannot be removed LUL")
+                    await ctx.send(f"{core.prefix}{args.cmd} cannot be removed LUL")
 
                 else:
                     command = core.commands[args.cmd]
                     core.remove_command(command)
-                    await ctx.send(f"!{args.cmd} is gone forever PepeHands")
+                    await ctx.send(f"{core.prefix}{args.cmd} is gone forever PepeHands")
 
             else:
-                await ctx.send(f"!{args.cmd} doesn't even exist LUL")
+                await ctx.send(f"{core.prefix}{args.cmd} doesn't even exist LUL")
 
     @commands.command(name='bottest', aliases=['test', 'ping'], cls=commands.ModCommand)
     async def cmd_bottest(ctx: Context):

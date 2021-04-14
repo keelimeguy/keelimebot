@@ -4,7 +4,7 @@ import logging
 from twitchio import Context
 from typing import Union
 
-from keelimebot.permissions import Permissions
+from keelimebot.twitch.permissions import Permissions
 from .permissions_command import PermissionsCommand
 from .usage_command import UsageCommand
 
