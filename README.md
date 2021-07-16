@@ -37,6 +37,7 @@ The following environment variables are used by the program:
 - TWITCH_ID=Client ID (for twitch bots)
 - DISCORD_TOKEN= Bot token (for discord bots)
 - DISCORD_OWNER_ID= User ID of bot owner (for discord bots)
+- BOT_EMOJI_GUILD= Guild ID of main bot discord channel (for grabbing emojis)
 
 ### Requirements
 `pip install -r requirements.txt`

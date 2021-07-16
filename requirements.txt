@@ -1,3 +1,4 @@
 git+https://github.com/keelimeguy/TwitchIO.git
 git+https://github.com/keelimeguy/discord.py.git
+git+https://github.com/keelimeguy/discord-py-interactions.git
 jsonpickle>=1.4.1

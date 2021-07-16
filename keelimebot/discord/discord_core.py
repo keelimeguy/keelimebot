@@ -5,7 +5,9 @@ import os
 from discord.ext import commands as basecommands
 from discord.ext.commands import Context
 from discord import Message, Member
+from discord_slash import SlashCommand
 
+from keelimebot.discord.discord_bot import add_custom_commands, add_slash_commands
 from keelimebot.serializer import json_deserialize_from_file, json_serialize_to_string
 from .commands import commands
 
@@ -31,24 +33,33 @@ class DiscordCore(basecommands.Bot):
         self._excluded_commands = []
 
         super().__init__(
+            # intents=Intents.all(),
             command_prefix=prefix,
             owner_id=os.getenv('DISCORD_OWNER_ID'),
             help_command=None
         )
-        self.add_custom_commands()
+        self._add_custom_commands()
 
         self._excluded_commands = list(self.all_commands.keys())
         self._commandlist = {}
         self._lock_json = False
 
-        self.add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
-        self.dump_commands_to_json_file()
-        self.add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
+        self._add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
+        self._dump_commands_to_json_file()
+        self._add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
+
+        self._add_slash_commands()
+
+        self.ordered_message_handlers = []
+        self.emojis = {}
+
+    def add_message_handler(self, handler):
+        self.ordered_message_handlers.append(handler)
 
     def run_bot(self):
         basecommands.Bot.run(self, os.getenv('DISCORD_TOKEN'))
 
-    def add_commands_from_json_file(self, filename: str):
+    def _add_commands_from_json_file(self, filename: str):
         self._lock_json = True
 
         try:
@@ -75,7 +86,7 @@ class DiscordCore(basecommands.Bot):
 
         self._lock_json = False
 
-    def dump_commands_to_json_file(self):
+    def _dump_commands_to_json_file(self):
         if self._lock_json:
             return
 
@@ -88,7 +99,7 @@ class DiscordCore(basecommands.Bot):
         if command.name not in self._excluded_commands:
             self._commandlist[command.name] = f"{command.name}"
 
-        self.dump_commands_to_json_file()
+        self._dump_commands_to_json_file()
 
     def remove_command(self, command: commands.DefaultCommand):
         super().remove_command(command)
@@ -96,7 +107,7 @@ class DiscordCore(basecommands.Bot):
         if command.name in self._commandlist:
             del self._commandlist[command.name]
 
-        self.dump_commands_to_json_file()
+        self._dump_commands_to_json_file()
 
     def command(self, *, name: str = None, cls=commands.DefaultCommand, func=None, **attrs):
         """Decorator which registers a command on the bot.
@@ -116,13 +127,25 @@ class DiscordCore(basecommands.Bot):
         """Called once when the bot goes online.
         """
 
+        try:
+            await self.slash.sync_all_commands(delete_from_unused_guilds=True)
+        except Exception:
+            logger.warning('Ignoring exception during "sync_all_commands"')
+            logger.debug('', exc_info=True)
+
         logger.info(f'Ready | {os.getenv("BOTNAME")}')
 
         for guild in self.guilds:
             logger.info(f'{self.user} is connected to: {guild.name}(id: {guild.id})')
 
             members = '\n - '.join([member.name for member in guild.members])
-            logger.info(f'Guild Members:\n - {members}')
+            logger.debug(f'Guild Members:\n - {members}')
+
+            for emoji in guild.emojis:
+                logger.debug(f"{emoji.name} - {emoji.id}")
+
+                if guild.id == os.getenv("BOT_EMOJI_GUILD"):
+                    self.emojis[emoji.name] = emoji
 
     async def on_member_join(self, member: Member):
         """Called when new member joins
@@ -138,13 +161,9 @@ class DiscordCore(basecommands.Bot):
         if message.author == self.user:
             return
 
-        ordered_message_handlers = [
-            # TODO: e.g. moderation handling
-        ]
-
         message_handled = False
-        for handler in ordered_message_handlers:
-            message_handled = handler(message)
+        for handler in self.ordered_message_handlers:
+            message_handled = await handler(message)
             if message_handled:
                 break
 
@@ -154,7 +173,7 @@ class DiscordCore(basecommands.Bot):
     async def on_error(self, event_method: str, *args, **kwargs):
         """Called once when an error occurs
         """
-        logger.info(f'Ignoring exception in {event_method}')
+        logger.warning(f'Ignoring exception in {event_method}')
         logger.debug('', exc_info=True)
 
     async def on_command_error(self, context: Context, exception: Exception):
@@ -171,18 +190,12 @@ class DiscordCore(basecommands.Bot):
         if cog and cog.has_error_handler():
             return
 
-        logger.info(f'Ignoring exception in command {context.command}:')
+        logger.warning(f'Ignoring exception in command {context.command}:')
         logger.debug('', exc_info=True)
 
-    def add_custom_commands(self):
-        self.command(name='bottest', aliases=['test', 'ping'], func=DiscordCore.cmd_bottest)
+    def _add_custom_commands(self):
+        add_custom_commands(self)
 
-    ########################
-    # Commands
-    ########################
-
-    async def cmd_bottest(ctx: Context):
-        """Check that the bot is connected
-        """
-
-        await ctx.send('I am surviving and thriving <:taigaSalute:813611124988575794>')
+    def _add_slash_commands(self):
+        self.slash = SlashCommand(self)
+        add_slash_commands(self.slash)
