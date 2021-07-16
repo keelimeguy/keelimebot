@@ -32,10 +32,12 @@ if __name__ == '__main__':
     _parser.add_argument('bot_type', help='twitch|discord')
     _parser.add_argument('-v', '--verbose', action='store_true', help='print debug information')
     _parser.add_argument('--prefix', default='k!', help='prefix to use for commands')
-    _parser.add_argument('--channel_data_dir', default='./data', help='name of folder to keep channel data')
+    _parser.add_argument('--channel-data-dir', default='./data', help='name of folder to keep channel data')
     _parser.add_argument('--hostname', default='localhost', help='hostname for gui web server')
     _parser.add_argument('--port', type=int, default=8080, help='port for gui web server')
     _parser.add_argument('--ssl', action='store_true', help='run gui webserver over https')
+    _parser.add_argument('--manual-mode', action='store_true', help='run with a manual command line message handler')
+    _parser.add_argument('--no-sync', action='store_true', help='do not sync discord slash commands')
     _args = _parser.parse_args()
 
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')

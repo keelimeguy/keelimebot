@@ -5,6 +5,20 @@ from keelimebot.twitch.twitch_core import TwitchCore
 logger = logging.getLogger(__name__)
 
 
-def get_twitch_bot(args) -> TwitchCore:
-    core = TwitchCore(prefix=args.prefix, channel_data_dir=args.channel_data_dir)
-    return core
+class TwitchBot:
+    core = None
+
+    @classmethod
+    def get_core(cls) -> TwitchCore:
+        return cls.core
+
+    @classmethod
+    def run(cls):
+        cls.core.run_bot()
+
+    def __init__(self, args):
+        if TwitchBot.core is None:
+            TwitchBot.core = TwitchCore(prefix=args.prefix, channel_data_dir=args.channel_data_dir)
+
+        else:
+            raise RuntimeError("You cannot create another instance of TwitchBot")

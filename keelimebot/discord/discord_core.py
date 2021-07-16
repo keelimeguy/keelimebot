@@ -7,7 +7,6 @@ from discord.ext.commands import Context
 from discord import Message, Member
 from discord_slash import SlashCommand
 
-from keelimebot.discord.discord_bot import add_custom_commands, add_slash_commands
 from keelimebot.serializer import json_deserialize_from_file, json_serialize_to_string
 from .commands import commands
 
@@ -21,16 +20,20 @@ class DiscordCore(basecommands.Bot):
     def get_instance(cls):
         return cls.__instance__
 
-    def __init__(self, prefix='!', channel_data_dir: str = '.'):
+    def __init__(self, prefix='!', channel_data_dir: str = '.', no_sync: bool = False):
         if DiscordCore.__instance__ is None:
             DiscordCore.__instance__ = self
         else:
             raise RuntimeError("You cannot create another instance of DiscordCore")
 
+        self._no_sync = no_sync
         self._channel_data_dir = channel_data_dir
         self._lock_json = True
         self._commandlist = {}
         self._excluded_commands = []
+        self._ordered_message_handlers = []
+
+        self.emoji_map = {}
 
         super().__init__(
             # intents=Intents.all(),
@@ -38,8 +41,10 @@ class DiscordCore(basecommands.Bot):
             owner_id=os.getenv('DISCORD_OWNER_ID'),
             help_command=None
         )
-        self._add_custom_commands()
 
+        self._slash = SlashCommand(self, sync_commands=not no_sync)
+
+    def initialize_custom_commands(self):
         self._excluded_commands = list(self.all_commands.keys())
         self._commandlist = {}
         self._lock_json = False
@@ -48,13 +53,8 @@ class DiscordCore(basecommands.Bot):
         self._dump_commands_to_json_file()
         self._add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
 
-        self._add_slash_commands()
-
-        self.ordered_message_handlers = []
-        self.emojis = {}
-
     def add_message_handler(self, handler):
-        self.ordered_message_handlers.append(handler)
+        self._ordered_message_handlers.append(handler)
 
     def run_bot(self):
         basecommands.Bot.run(self, os.getenv('DISCORD_TOKEN'))
@@ -127,11 +127,12 @@ class DiscordCore(basecommands.Bot):
         """Called once when the bot goes online.
         """
 
-        try:
-            await self.slash.sync_all_commands(delete_from_unused_guilds=True)
-        except Exception:
-            logger.warning('Ignoring exception during "sync_all_commands"')
-            logger.debug('', exc_info=True)
+        if not self._no_sync:
+            try:
+                await self._slash.sync_all_commands()
+            except Exception:
+                logger.warning('Ignoring exception during sync_all_commands')
+                logger.debug('', exc_info=True)
 
         logger.info(f'Ready | {os.getenv("BOTNAME")}')
 
@@ -144,8 +145,8 @@ class DiscordCore(basecommands.Bot):
             for emoji in guild.emojis:
                 logger.debug(f"{emoji.name} - {emoji.id}")
 
-                if guild.id == os.getenv("BOT_EMOJI_GUILD"):
-                    self.emojis[emoji.name] = emoji
+                if str(guild.id) == os.getenv("BOT_EMOJI_GUILD"):
+                    self.emoji_map[emoji.name] = emoji
 
     async def on_member_join(self, member: Member):
         """Called when new member joins
@@ -162,7 +163,7 @@ class DiscordCore(basecommands.Bot):
             return
 
         message_handled = False
-        for handler in self.ordered_message_handlers:
+        for handler in self._ordered_message_handlers:
             message_handled = await handler(message)
             if message_handled:
                 break
@@ -190,12 +191,5 @@ class DiscordCore(basecommands.Bot):
         if cog and cog.has_error_handler():
             return
 
-        logger.warning(f'Ignoring exception in command {context.command}:')
+        logger.warning(f'Ignoring exception in command {context.command}')
         logger.debug('', exc_info=True)
-
-    def _add_custom_commands(self):
-        add_custom_commands(self)
-
-    def _add_slash_commands(self):
-        self.slash = SlashCommand(self)
-        add_slash_commands(self.slash)
