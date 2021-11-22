@@ -4,10 +4,12 @@ import datetime
 import inspect
 import logging
 import shlex
+import json
 import os
 
 from twitchio.ext import commands as basecommands
-from twitchio import Context, Message
+from twitchio.ext.commands import Context
+from twitchio import Message
 from typing import List, Union
 
 from keelimebot.serializer import json_deserialize_from_file, json_serialize_to_string
@@ -25,32 +27,36 @@ class TwitchCore(basecommands.Bot):
     def get_instance(cls):
         return cls.__instance__
 
-    def __init__(self, prefix='!', channel_data_dir: str = '.'):
+    def __init__(self, prefix='!', data_dir: str = '.'):
         if TwitchCore.__instance__ is None:
             TwitchCore.__instance__ = self
         else:
             raise RuntimeError("You cannot create another instance of TwitchCore")
 
-        self._channel_data_dir = channel_data_dir
+        self._data_dir = data_dir
         self._lock_json = True
         self._commandlist = {}
         self._excluded_commands = []
 
+        with open(f"{self._data_dir}/twitch_channels.json") as f:
+            initial_channels = json.load(f)['initial_channels']
+            assert(isinstance(initial_channels, list))
+
         super().__init__(
-            irc_token=os.getenv('TWITCH_TOKEN'),
-            client_id=os.getenv('TWITCH_ID'),
-            nick=os.getenv('BOTNAME'),
+            token=os.getenv('TWITCH_TOKEN'),
             prefix=prefix,
-            initial_channels=[os.getenv('TWITCH_CHANNEL')]
+            client_secret=None,
+            initial_channels=initial_channels
         )
 
-        self._excluded_commands = list(self.commands.keys()) + list(self._aliases.keys())
+        self._excluded_commands = list(self.commands.keys()) + list(self._command_aliases.keys())
         self._commandlist = {}
         self._lock_json = False
+        self._initial_channels = initial_channels
 
-        self.add_commands_from_json_file(f"{self._channel_data_dir}/twitch_commands.json")
+        self.add_commands_from_json_file(f"{self._data_dir}/twitch_commands.json")
         self.dump_commands_to_json_file()
-        self.add_commands_from_json_file(f"{self._channel_data_dir}/twitch_commands.json")
+        self.add_commands_from_json_file(f"{self._data_dir}/twitch_commands.json")
 
     def run_bot(self):
         super().run()
@@ -60,8 +66,8 @@ class TwitchCore(basecommands.Bot):
         """
 
         logger.info(f'Ready | {self.nick}')
-        for channel in self.initial_channels:
-            await self._ws.send_privmsg(channel, '/me has landed!')
+        for channel in self._initial_channels:
+            await self.get_channel(channel).send("/me has landed!")
 
     async def event_message(self, message: Message):
         """Called once when a message is posted in chat.
@@ -71,19 +77,23 @@ class TwitchCore(basecommands.Bot):
 
         timestamp = int(datetime.datetime.now().timestamp()*1000)
         if message.tags:
-            if abs(message.tags['tmi-sent-ts'] - timestamp) >= 1000:
+            if abs(int(message.tags['tmi-sent-ts']) - timestamp) >= 1000:
                 logger.warning(f"timestamp is off by more than 1s: tags={message.tags['tmi-sent-ts']}ms, now={timestamp}ms")
             timestamp = message.tags['tmi-sent-ts']
         else:
             timestamp = str(timestamp)[:-4]+'XXXX'
 
         if author_permissions == Permissions.NONE:
-            logger.info(f"{timestamp} [#{message.channel}] {message.author.name}: {message.content}")
+            logger.info(
+                f"{timestamp} [#{message.channel.name}] "
+                f"{message.author.name if message.author else '<unknown>'}: {message.content}")
         else:
-            logger.info(f"{timestamp} [#{message.channel}] "
-                        f"{message.author.name}({author_permissions.name}): {message.content}")
+            logger.info(
+                f"{timestamp} [#{message.channel.name}] "
+                f"{message.author.name if message.author else '<unknown>'}({author_permissions.name}): {message.content}")
 
-        await self.handle_commands(message)
+        if message.author:
+            await self.handle_commands(message)
 
     async def event_command_error(self, ctx: Context, error: Exception):
         """Called once when an error occurs during command handling
@@ -122,7 +132,7 @@ class TwitchCore(basecommands.Bot):
         if self._lock_json:
             return
 
-        with open(f"{self._channel_data_dir}/twitch_commands.json", 'w') as f:
+        with open(f"{self._data_dir}/twitch_commands.json", 'w') as f:
             f.write(json_serialize_to_string(self.commands))
 
     async def _handle_checks(self, ctx, no_global_checks=False):

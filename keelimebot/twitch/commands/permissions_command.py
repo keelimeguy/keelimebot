@@ -1,7 +1,7 @@
 import logging
 
 from twitchio.ext import commands
-from twitchio import Context
+from twitchio.ext.commands import Context
 from abc import ABC, abstractmethod
 
 from keelimebot.twitch.permissions import Permissions, check_permissions

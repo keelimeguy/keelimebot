@@ -1,7 +1,7 @@
 import inspect
 import logging
 
-from twitchio import Context
+from twitchio.ext.commands import Context
 from typing import Union
 
 from keelimebot.twitch.permissions import Permissions

@@ -9,3 +9,5 @@ venv/
 # app
 /data/
 *.pem
+discord_secret
+twitch_secret

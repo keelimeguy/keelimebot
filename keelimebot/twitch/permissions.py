@@ -1,5 +1,4 @@
 import logging
-import os
 
 from twitchio import Message
 from enum import Enum
@@ -18,20 +17,21 @@ def get_author_permissions(message: Message) -> Permissions:
     """Returns the permissions of the given message's author
     """
 
-    if message.tags and message.tags['room-id'] == message.author.id:
-        return Permissions.STREAMER
+    if message.author:
+        if message.tags and message.tags['room-id'] == message.author.id:
+            return Permissions.STREAMER
 
-    elif message.author.name.lower() == os.getenv('BOTNAME'):
-        return Permissions.BOT
+        elif message.author.name == message.channel._ws.nick:
+            return Permissions.BOT
 
-    elif message.author.is_mod:
-        return Permissions.MODERATOR
+        elif message.author.is_mod:
+            return Permissions.MODERATOR
 
-    elif message.tags and 'vip/1' in message.tags['badges'].split(','):
-        return Permissions.VIP
+        elif message.tags and 'vip/1' in message.tags['badges'].split(','):
+            return Permissions.VIP
 
-    elif message.author.is_subscriber:
-        return Permissions.SUBSCRIBER
+        elif message.author.is_subscriber:
+            return Permissions.SUBSCRIBER
 
     return Permissions.NONE
 

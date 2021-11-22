@@ -3,7 +3,7 @@ import shlex
 import re
 
 from twitchio.ext import commands
-from twitchio import Context
+from twitchio.ext.commands import Context
 from abc import ABC
 
 logger = logging.getLogger(__name__)

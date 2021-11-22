@@ -20,8 +20,12 @@ class DiscordBot:
 
     @classmethod
     def add_slash_commands(cls):
-        cls.core.slash.add_slash_command(DiscordBot.slash_kanna, name="kanna", description="Prints Kanna art",
-                                         guild_ids=[guild.id for guild in cls.core.guilds])
+        cls.core.slash.add_slash_command(DiscordBot.slash_kanna, name="kanna", description="Prints Kanna art")
+        cls.core.slash.add_slash_command(
+            DiscordBot.slash_anisongchallenge,
+            name="anisongchallenge",
+            description="Shares 50-Day Song Challenge"
+        )
 
     @classmethod
     def get_core(cls) -> DiscordCore:
@@ -34,7 +38,7 @@ class DiscordBot:
     def __init__(self, args):
         if DiscordBot.core is None:
 
-            DiscordBot.core = DiscordCore(prefix=args.prefix, channel_data_dir=args.channel_data_dir, no_sync=args.no_sync)
+            DiscordBot.core = DiscordCore(prefix=args.prefix, data_dir=args.data_dir, no_sync=args.no_sync)
             self.add_custom_commands()
             self.add_slash_commands()
 
@@ -80,3 +84,10 @@ class DiscordBot:
 
         embed = Embed(description=msg, color=0xf4afca)
         await ctx.send(embed=embed)
+
+    @staticmethod
+    async def slash_anisongchallenge(ctx: SlashContext):
+        """Shares 50-Day Song Challenge
+        """
+
+        await ctx.send("https://i.imgur.com/pc2m4qL.png")

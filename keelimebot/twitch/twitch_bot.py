@@ -18,7 +18,7 @@ class TwitchBot:
 
     def __init__(self, args):
         if TwitchBot.core is None:
-            TwitchBot.core = TwitchCore(prefix=args.prefix, channel_data_dir=args.channel_data_dir)
+            TwitchBot.core = TwitchCore(prefix=args.prefix, data_dir=args.data_dir)
 
         else:
             raise RuntimeError("You cannot create another instance of TwitchBot")

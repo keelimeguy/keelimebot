@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(args):
-    if not os.path.exists(args.channel_data_dir):
-        os.makedirs(args.channel_data_dir)
+    if not os.path.exists(args.data_dir):
+        os.makedirs(args.data_dir)
 
     keelimebot = Keelimebot(args)
     keelimebot.start()
@@ -32,15 +32,20 @@ if __name__ == '__main__':
     _parser.add_argument('bot_type', help='twitch|discord')
     _parser.add_argument('-v', '--verbose', action='store_true', help='print debug information')
     _parser.add_argument('--prefix', default='k!', help='prefix to use for commands')
-    _parser.add_argument('--channel-data-dir', default='./data', help='name of folder to keep channel data')
+    _parser.add_argument('--data-dir', default='./data', help='name of folder to keep bot data')
     _parser.add_argument('--hostname', default='localhost', help='hostname for gui web server')
     _parser.add_argument('--port', type=int, default=8080, help='port for gui web server')
     _parser.add_argument('--ssl', action='store_true', help='run gui webserver over https')
     _parser.add_argument('--manual-mode', action='store_true', help='run with a manual command line message handler')
     _parser.add_argument('--no-sync', action='store_true', help='do not sync discord slash commands')
+    _parser.add_argument('--print-data-dir', action='store_true', help=argparse.SUPPRESS)
     _args = _parser.parse_args()
 
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+    if _args.print_data_dir:
+        print(_args.data_dir)
+        sys.exit(0)
 
     if _args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(threadName)s.%(name)s:%(lineno)d [%(levelname)s] %(message)s')

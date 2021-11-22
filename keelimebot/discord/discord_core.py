@@ -4,7 +4,7 @@ import os
 
 from discord.ext import commands as basecommands
 from discord.ext.commands import Context
-from discord import Message, Member
+from discord import Member, Message
 from discord_slash import SlashCommand
 
 from keelimebot.serializer import json_deserialize_from_file, json_serialize_to_string
@@ -20,14 +20,14 @@ class DiscordCore(basecommands.Bot):
     def get_instance(cls):
         return cls.__instance__
 
-    def __init__(self, prefix='!', channel_data_dir: str = '.', no_sync: bool = False):
+    def __init__(self, prefix='!', data_dir: str = '.', no_sync: bool = False):
         if DiscordCore.__instance__ is None:
             DiscordCore.__instance__ = self
         else:
             raise RuntimeError("You cannot create another instance of DiscordCore")
 
         self._no_sync = no_sync
-        self._channel_data_dir = channel_data_dir
+        self._data_dir = data_dir
         self._lock_json = True
         self._commandlist = {}
         self._excluded_commands = []
@@ -42,16 +42,16 @@ class DiscordCore(basecommands.Bot):
             help_command=None
         )
 
-        self._slash = SlashCommand(self, sync_commands=not no_sync)
+        self._slash = SlashCommand(self)
 
     def initialize_custom_commands(self):
         self._excluded_commands = list(self.all_commands.keys())
         self._commandlist = {}
         self._lock_json = False
 
-        self._add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
+        self._add_commands_from_json_file(f"{self._data_dir}/discord_commands.json")
         self._dump_commands_to_json_file()
-        self._add_commands_from_json_file(f"{self._channel_data_dir}/discord_commands.json")
+        self._add_commands_from_json_file(f"{self._data_dir}/discord_commands.json")
 
     def add_message_handler(self, handler):
         self._ordered_message_handlers.append(handler)
@@ -90,7 +90,7 @@ class DiscordCore(basecommands.Bot):
         if self._lock_json:
             return
 
-        with open(f"{self._channel_data_dir}/discord_commands.json", 'w') as f:
+        with open(f"{self._data_dir}/discord_commands.json", 'w') as f:
             f.write(json_serialize_to_string(self.all_commands))
 
     def add_command(self, command: commands.DefaultCommand):
@@ -128,13 +128,17 @@ class DiscordCore(basecommands.Bot):
         """
 
         if not self._no_sync:
+            guild_ids = [guild.id for guild in self.guilds]
+            for name in self._slash.commands.keys():
+                if self._slash.commands[name]:
+                    self._slash.commands[name].allowed_guild_ids = guild_ids
             try:
-                await self._slash.sync_all_commands()
+                await self._slash.sync_all_commands(delete_from_unused_guilds=True)
             except Exception:
                 logger.warning('Ignoring exception during sync_all_commands')
                 logger.debug('', exc_info=True)
 
-        logger.info(f'Ready | {os.getenv("BOTNAME")}')
+        logger.info(f'Ready | {self.user.name}')
 
         for guild in self.guilds:
             logger.info(f'{self.user} is connected to: {guild.name}(id: {guild.id})')

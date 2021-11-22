@@ -21,32 +21,33 @@ Python virtual environment is always recommended.
 ### Tokens
 
 #### Twitch
-Get an IRC OAuth token [here](https://twitchapps.com/tmi/).
 
-Get a Client ID [here](https://dev.twitch.tv/console/apps/create).
+Get a Client ID / Client Secret [here](https://dev.twitch.tv/console/apps/create/).
+
+Get a Twitch access token (for development, not recommended for production) [here](https://twitchtokengenerator.com/).
 
 #### Discord
 Create your bot application and find a token [here](https://discord.com/developers/applications).
 
 ### Environment
-The following environment variables are used by the program:
+The following environment variables are used by the program (the `./run.sh` script can help set them automatically):
 
-- BOTNAME=the name for your bot
-- TWITCH_CHANNEL=channel to connect to (for twitch bots)
-- TWITCH_TOKEN=IRC OAuth token (for twitch bots)
-- TWITCH_ID=Client ID (for twitch bots)
-- DISCORD_TOKEN= Bot token (for discord bots)
+- TWITCH_TOKEN= Twitch Access Token (for twitch bots)
 - DISCORD_OWNER_ID= User ID of bot owner (for discord bots)
 - BOT_EMOJI_GUILD= Guild ID of main bot discord channel (for grabbing emojis)
+- DISCORD_TOKEN= Bot token (for discord bots)
 
 ### Requirements
-`pip install -r requirements.txt`
+- Using script: `./run.sh venv`
+- Without script: `python3 -m pip install -r requirements.txt`
 
 ### Testing
-`python -m unittest`
+- Using script: `./run.sh test`
+- Without script: `python3 -m unittest`
 
 ### Command line
-`python -m keelimebot.main -h`
+- Using script: `./run.sh -h`
+- Without script: `python3 -m keelimebot.main -h`
 
 ## TODO
 - Check updates in requirement submodules..
