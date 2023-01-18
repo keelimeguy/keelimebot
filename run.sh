@@ -4,7 +4,8 @@
 # User Configurations
 #######################
 
-SCRIPT_MAIN=keelimebot.main
+SCRIPT_FOLDER=keelimebot
+SCRIPT_MAIN=${SCRIPT_FOLDER}.main
 
 # Point to your python 3 executable
 PYTHON=python
@@ -18,11 +19,12 @@ USE_VENV=yes # no|yes
 #######################
 
 print_usage () {
-    echo "usage: \`$0 [help|venv|test|-h]\`"
+    echo "usage: \`$0 [help|venv|test|format|-h]\`"
     echo "  args:"
     echo "     help: prints this"
     echo "     venv: updates the virtual environment"
     echo "     test: runs the tests"
+    echo "     format: runs the autoformatter"
     echo "     -h: prints bot script help options"
 }
 
@@ -40,6 +42,12 @@ validate_script_assumptions () {
         exit 1
     fi
 
+    # ${PYTHON} -c "import tkinter" > /dev/null 2>&1
+    # if [ "$?" != "0" ]; then
+    #     echo "This script requires tkinter, try \`apt-get install python3-tk\`"
+    #     exit 1
+    # fi
+
     # Require at least one argument
     if [ "$#" -eq 0 ]; then
         print_usage
@@ -54,6 +62,7 @@ activate_venv () {
         elif [ -f "venv/Scripts/activate" ]; then
             source venv/Scripts/activate || exit 1
         else
+            echo "Virtual environment is not setup! Try \`$0 venv\` or modify \"USE_VENV\" in script configuration."
             exit 1
         fi
     elif [  "${USE_VENV}" != "no"  ]; then
@@ -71,7 +80,7 @@ run_venv () {
             activate_venv
 
             ${PYTHON} -m pip install --upgrade pip
-            ${PYTHON} -m pip install flake8 pytest coverage
+            ${PYTHON} -m pip install flake8 pytest coverage autopep8
             ${PYTHON} -m pip install -r requirements.txt
 
         else
@@ -88,12 +97,16 @@ run_venv () {
 run_test () {
     activate_venv
 
-    flake8 keelimebot/ --count --select=E9,F63,F7,F82 --show-source --statistics
-    flake8 tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
-    flake8 keelimebot/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    flake8 tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    coverage run --source=keelimebot -m pytest
+    flake8 ${SCRIPT_FOLDER} --count --select=E9,F63,F7,F82 --show-source --statistics
+    flake8 ${SCRIPT_FOLDER} --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    coverage run --source=${SCRIPT_FOLDER} -m pytest
     coverage report --skip-covered
+}
+
+run_format () {
+    activate_venv
+
+    for f in `find ${SCRIPT_FOLDER} -name "*.py"`; do autopep8 --in-place --max-line-length=127 $f; done
 }
 
 make_twitch_secret () {
@@ -113,7 +126,7 @@ make_twitch_secret () {
     read -s -p "Enter a password to protect your secret: " PASS
     echo
 
-    echo ${TWITCH_ID}$'\n'${TWITCH_SECRET}$'\n'${TWITCH_TOKEN}$'\n'${TWITCH_REFRESH_TOKEN} | openssl enc -aes-256-cbc -salt -pass pass:$PASS > twitch_secret || exit 1
+    echo ${TWITCH_ID}$'\n'${TWITCH_SECRET}$'\n'${TWITCH_TOKEN}$'\n'${TWITCH_REFRESH_TOKEN} | openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:$PASS > twitch_secret || exit 1
     echo "Your twitch secret has been encrypted! Simply delete the \"twitch_secret\" file to reset it."
     echo ""
 
@@ -148,7 +161,7 @@ make_discord_secret () {
     read -s -p "Enter a password to protect your secret: " PASS
     echo
 
-    echo ${DISCORD_OWNER_ID}$'\n'${BOT_EMOJI_GUILD}$'\n'${DISCORD_TOKEN} | openssl enc -aes-256-cbc -salt -pass pass:$PASS > discord_secret || exit 1
+    echo ${DISCORD_OWNER_ID}$'\n'${BOT_EMOJI_GUILD}$'\n'${DISCORD_TOKEN} | openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:$PASS > discord_secret || exit 1
     echo "Your discord secret has been encrypted! Simply delete the \"discord_secret\" file to reset it."
 }
 
@@ -179,7 +192,7 @@ run_bot () {
             read -s -p "Enter password to unlock \"twitch_secret\": " PASS
             echo
 
-            twitch_secret=$(cat twitch_secret | openssl enc -aes-256-cbc -d -pass pass:${PASS})
+            twitch_secret=$(cat twitch_secret | openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:${PASS})
             twitcharr=(${twitch_secret})
 
             TWITCH_ID=${twitcharr[0]}
@@ -195,7 +208,7 @@ run_bot () {
             read -s -p "Enter password to unlock \"discord_secret\": " PASS
             echo
 
-            discord_secret=$(cat discord_secret | openssl enc -aes-256-cbc -d -pass pass:${PASS})
+            discord_secret=$(cat discord_secret | openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:${PASS})
             discordarr=(${discord_secret})
 
             DISCORD_OWNER_ID=${discordarr[0]}
@@ -224,6 +237,10 @@ if [ "$#" -eq 1 ]; then
 
     elif [ "$1" == "venv" ]; then
         run_venv
+        exit 0
+
+    elif [ "$1" == "format" ]; then
+        run_format
         exit 0
     fi
 fi

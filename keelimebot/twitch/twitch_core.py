@@ -40,7 +40,7 @@ class TwitchCore(basecommands.Bot):
 
         with open(f"{self._data_dir}/twitch_channels.json") as f:
             initial_channels = json.load(f)['initial_channels']
-            assert(isinstance(initial_channels, list))
+            assert (isinstance(initial_channels, list))
 
         super().__init__(
             token=os.getenv('TWITCH_TOKEN'),
@@ -211,7 +211,7 @@ class TwitchCore(basecommands.Bot):
             args = parser.parse_args(shlex.split(ctx.content)[1:])
 
             if check_args:
-                assert(check_args(args))
+                assert (check_args(args))
 
         except (SystemExit, AssertionError, ValueError):
             await ctx.send('command was not added!')
@@ -258,7 +258,7 @@ class TwitchCore(basecommands.Bot):
         """
 
         def check_args(args) -> bool:
-            assert(len(args.new_cmd.split()) == 1)
+            assert (len(args.new_cmd.split()) == 1)
             return True
 
         args = await TwitchCore.get_args(ctx, required=['new_cmd', 'action'], optional=[], check_args=check_args)
@@ -287,7 +287,7 @@ class TwitchCore(basecommands.Bot):
         """
 
         def check_args(args) -> bool:
-            assert(len(args.cmd.split()) == 1)
+            assert (len(args.cmd.split()) == 1)
             return True
 
         args = await TwitchCore.get_args(ctx, required=['cmd'], optional=[], check_args=check_args)

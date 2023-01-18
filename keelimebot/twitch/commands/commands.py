@@ -31,7 +31,7 @@ def command(*, name: str = None, aliases: Union[list, tuple] = None, cls=None, n
 class DefaultCommand(PermissionsCommand, UsageCommand):
     def __init__(self, name: str, func=None, text: str = None, **attrs):
         if func is None:
-            assert(text is not None)
+            assert (text is not None)
             self._func = self.cmd_textcommand
         else:
             self._func = func
@@ -40,7 +40,7 @@ class DefaultCommand(PermissionsCommand, UsageCommand):
 
         self.text = text
         if self.text is not None:
-            assert(func is None)
+            assert (func is None)
 
     async def cmd_textcommand(self, ctx: Context):
         await ctx.send(self.text)
