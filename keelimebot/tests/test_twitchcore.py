@@ -164,7 +164,7 @@ class TwitchCoreTestCase(unittest.TestCase):
 
     def test_get_args_check_args(self):
         def check_args(args):
-            assert(len(args.a.split()) == 1)
+            assert (len(args.a.split()) == 1)
             return True
 
         required = ['a']
@@ -176,7 +176,7 @@ class TwitchCoreTestCase(unittest.TestCase):
 
     def test_get_args_check_args_failure(self):
         def check_args(args):
-            assert(len(args.a.split()) == 1)
+            assert (len(args.a.split()) == 1)
             return True
 
         required = ['a']
