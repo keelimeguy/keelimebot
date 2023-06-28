@@ -1,4 +1,5 @@
 import logging
+import os
 
 from twitchio import Message
 from enum import Enum
@@ -6,7 +7,7 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 # Permissions listed in increasing order
-Permissions = Enum('Permissions', 'NONE SUBSCRIBER VIP MODERATOR BOT STREAMER')
+Permissions = Enum('Permissions', 'NONE SUBSCRIBER VIP MODERATOR BOT STREAMER SUDO')
 
 
 class PermissionsError(Exception):
@@ -18,7 +19,10 @@ def get_author_permissions(message: Message) -> Permissions:
     """
 
     if message.author:
-        if message.tags and message.tags['room-id'] == message.author.id:
+        if message.author.id == os.getenv('TWITCH_SUDO_ID'):
+            return Permissions.SUDO
+
+        elif message.tags and message.tags['room-id'] == message.author.id:
             return Permissions.STREAMER
 
         elif message.author.name == message.channel._ws.nick:

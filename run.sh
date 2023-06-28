@@ -6,6 +6,7 @@
 
 SCRIPT_FOLDER=keelimebot
 SCRIPT_MAIN=${SCRIPT_FOLDER}.main
+TWITCH_SUDO_ID=
 
 # Point to your python 3 executable
 PYTHON=python
@@ -189,8 +190,11 @@ run_bot () {
                 make_twitch_secret $@
             fi
 
-            read -s -p "Enter password to unlock \"twitch_secret\": " PASS
-            echo
+            PASS=
+            if [ -z ${PASS} ]; then
+                read -s -p "Enter password to unlock \"twitch_secret\": " PASS
+                echo
+            fi
 
             twitch_secret=$(cat twitch_secret | openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:${PASS})
             twitcharr=(${twitch_secret})
@@ -205,8 +209,11 @@ run_bot () {
                 make_discord_secret $@
             fi
 
-            read -s -p "Enter password to unlock \"discord_secret\": " PASS
-            echo
+            PASS=
+            if [ -z ${PASS} ]; then
+                read -s -p "Enter password to unlock \"discord_secret\": " PASS
+                echo
+            fi
 
             discord_secret=$(cat discord_secret | openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:${PASS})
             discordarr=(${discord_secret})
@@ -217,7 +224,7 @@ run_bot () {
         fi
     fi
 
-    TWITCH_TOKEN=${TWITCH_TOKEN} DISCORD_OWNER_ID=${DISCORD_OWNER_ID} BOT_EMOJI_GUILD=${BOT_EMOJI_GUILD} DISCORD_TOKEN=${DISCORD_TOKEN} \
+    TWITCH_SUDO_ID=${TWITCH_SUDO_ID} TWITCH_TOKEN=${TWITCH_TOKEN} DISCORD_OWNER_ID=${DISCORD_OWNER_ID} BOT_EMOJI_GUILD=${BOT_EMOJI_GUILD} DISCORD_TOKEN=${DISCORD_TOKEN} \
      ${PYTHON} -m ${SCRIPT_MAIN} $@
 }
 
