@@ -77,16 +77,16 @@ class UsageCommand(commands.Command, ABC):
                 names += self.aliases
 
             for name in names:
-                index = ctx.content.find(name)
+                index = ctx.message.content.find(name)
                 if index != -1:
                     break
 
-            prefix = ctx.content[:index] if index != -1 else '!'
+            prefix = ctx.message.content[:index] if index != -1 else '!'
             await ctx.send(f"usage: {prefix}{self.name} {self.usage}")
-            raise CommandFormattingError(f"wrong number of arguments: {ctx.content}")
+            raise CommandFormattingError(f"wrong number of arguments: {ctx.message.content}")
 
         try:
-            args = shlex.split(ctx.content)[1:]
+            args = shlex.split(ctx.message.content)[1:]
         except ValueError:
             await failure()
 

@@ -33,6 +33,7 @@ class TwitchCore(basecommands.Bot):
         else:
             raise RuntimeError("You cannot create another instance of TwitchCore")
 
+        self.prefix = prefix
         self._data_dir = data_dir
         self._lock_json = True
         self._commandlist = {}
@@ -208,14 +209,14 @@ class TwitchCore(basecommands.Bot):
             if optional:
                 for arg in optional:
                     parser.add_argument(arg, nargs='?', default=None)
-            args = parser.parse_args(shlex.split(ctx.content)[1:])
+            args = parser.parse_args(shlex.split(ctx.message.content)[1:])
 
             if check_args:
                 assert (check_args(args))
 
         except (SystemExit, AssertionError, ValueError):
             await ctx.send('command was not added!')
-            raise CommandFormattingError(f"Malformed command: {ctx.content}")
+            raise CommandFormattingError(f"Malformed command: {ctx.message.content}")
 
         return args
 
@@ -297,7 +298,7 @@ class TwitchCore(basecommands.Bot):
 
             if args.cmd in core.commands:
 
-                if args.cmd in core.excluded_commands:
+                if args.cmd in core._excluded_commands:
                     await ctx.send(f"{core.prefix}{args.cmd} cannot be removed LUL")
 
                 else:
